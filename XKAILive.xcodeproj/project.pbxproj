@@ -262,7 +262,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-				DC6474232EBF09B400CDD410 /* PBXTargetDependency */ = {
+		DC6474232EBF09B400CDD410 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = DC6474132EBF09B300CDD410 /* XKAILive */;
 			targetProxy = DC6474222EBF09B400CDD410 /* PBXContainerItemProxy */;
@@ -551,7 +551,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		DC64740F2EBF09B300CDD410 /* Build configuration list for PBXProject "XKdemo" */ = {
+		DC64740F2EBF09B300CDD410 /* Build configuration list for PBXProject "XKAILive" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DC6474332EBF09B400CDD410 /* Debug */,

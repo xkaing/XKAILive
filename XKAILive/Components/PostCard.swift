@@ -9,6 +9,7 @@ import SwiftUI
 
 struct PostCard: View {
     let post: Post
+    @State private var isLiked: Bool = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -105,6 +106,60 @@ struct PostCard: View {
                     }
                 }
             }
+            
+            // 操作区
+            HStack {
+                // 点赞按钮
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                        isLiked.toggle()
+                    }
+                }) {
+                    Image(systemName: isLiked ? "heart.fill" : "heart")
+                        .font(.system(size: 20))
+                        .foregroundColor(isLiked ? .red : .secondary)
+                        .scaleEffect(isLiked ? 1.2 : 1.0)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Spacer()
+                
+                // 评论按钮
+                Button(action: {
+                    // TODO: 实现评论功能
+                }) {
+                    Image(systemName: "bubble.right")
+                        .font(.system(size: 20))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Spacer()
+                
+                // 分享按钮
+                Button(action: {
+                    // TODO: 实现分享功能
+                }) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 20))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Spacer()
+                
+                // 更多按钮
+                Button(action: {
+                    // TODO: 实现更多功能
+                }) {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 20))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 24)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
