@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS likes CASCADE;
 
 -- 创建 likes 表
 CREATE TABLE likes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id BIGSERIAL PRIMARY KEY,  -- int8 类型，自增主键
   moment_id BIGINT NOT NULL REFERENCES moments(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL, -- 点赞用户的 ID（Supabase auth.uid() 的字符串形式）
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -28,6 +28,7 @@ CREATE INDEX idx_likes_moment_user ON likes(moment_id, user_id);
 
 -- 添加注释说明字段用途
 COMMENT ON TABLE likes IS '存储用户对动态的点赞记录';
+COMMENT ON COLUMN likes.id IS '主键ID，BIGSERIAL (int8) 类型';
 COMMENT ON COLUMN likes.moment_id IS '动态ID，外键关联 moments.id';
 COMMENT ON COLUMN likes.user_id IS '点赞用户的ID（Supabase auth.uid() 的字符串形式）';
 COMMENT ON COLUMN likes.created_at IS '点赞时间';

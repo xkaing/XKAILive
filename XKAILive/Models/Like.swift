@@ -9,7 +9,7 @@ import Foundation
 
 /// 点赞数据模型，对应 Supabase likes 表
 struct Like: Codable, Identifiable {
-    let id: UUID
+    let id: Int64  // int8 类型，对应数据库的 BIGINT
     let momentId: Int64  // BIGINT 类型，对应 moments.id
     let userId: String
     let createdAt: String?
@@ -21,7 +21,7 @@ struct Like: Codable, Identifiable {
         case createdAt = "created_at"
     }
     
-    init(id: UUID = UUID(), momentId: Int64, userId: String, createdAt: String? = nil) {
+    init(id: Int64 = 0, momentId: Int64, userId: String, createdAt: String? = nil) {
         self.id = id
         self.momentId = momentId
         self.userId = userId
@@ -32,19 +32,21 @@ struct Like: Codable, Identifiable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // id 可能是 UUID 字符串或 UUID
-        var decodedId: UUID
-        if let idString = try? container.decode(String.self, forKey: .id) {
-            guard let uuid = UUID(uuidString: idString) else {
-                throw DecodingError.dataCorruptedError(
-                    forKey: .id,
-                    in: container,
-                    debugDescription: "Invalid UUID string"
-                )
-            }
-            decodedId = uuid
+        // id 是 int8 (Int64)，可能是整数或字符串
+        var decodedId: Int64
+        if let idInt = try? container.decode(Int64.self, forKey: .id) {
+            decodedId = idInt
+        } else if let idString = try? container.decode(String.self, forKey: .id),
+                  let idInt = Int64(idString) {
+            decodedId = idInt
+        } else if let idInt = try? container.decode(Int.self, forKey: .id) {
+            decodedId = Int64(idInt)
         } else {
-            decodedId = try container.decode(UUID.self, forKey: .id)
+            throw DecodingError.dataCorruptedError(
+                forKey: .id,
+                in: container,
+                debugDescription: "Invalid id format, expected int8"
+            )
         }
         self.id = decodedId
         
@@ -76,6 +78,20 @@ struct Like: Codable, Identifiable {
         } else {
             self.createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt)
         }
+    }
+    
+    // 自定义编码，插入新记录时排除 id 字段（让数据库自动生成）
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        // 只有当 id 不为默认值（0）时才编码，插入新记录时 id=0 会被排除
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        
+        try container.encode(momentId, forKey: .momentId)
+        try container.encode(userId, forKey: .userId)
+        try container.encodeIfPresent(createdAt, forKey: .createdAt)
     }
 }
 

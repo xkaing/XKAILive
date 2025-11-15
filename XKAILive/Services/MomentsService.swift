@@ -125,10 +125,11 @@ class MomentsService {
             
             print("✅ 成功点赞动态: \(momentId)")
         } catch {
-            // 如果是重复点赞错误，忽略（因为 UNIQUE 约束）
-            if let error = error as? NSError,
-               let errorDescription = error.userInfo[NSLocalizedDescriptionKey] as? String,
-               errorDescription.contains("duplicate") || errorDescription.contains("unique") {
+            // 检查是否是重复点赞错误（UNIQUE 约束或主键冲突）
+            let errorString = String(describing: error)
+            if errorString.contains("duplicate") || 
+               errorString.contains("unique") || 
+               errorString.contains("23505") {
                 print("ℹ️ 用户已点赞，忽略")
                 return
             }
