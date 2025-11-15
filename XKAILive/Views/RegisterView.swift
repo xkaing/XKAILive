@@ -11,7 +11,6 @@ import Combine
 struct RegisterView: View {
     @EnvironmentObject var authManager: AuthManager
     @Environment(\.dismiss) var dismiss
-    @State private var nickname: String = ""
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var confirmPassword: String = ""
@@ -20,7 +19,7 @@ struct RegisterView: View {
     @FocusState private var focusedField: Field?
     
     enum Field {
-        case nickname, email, password, confirmPassword
+        case email, password, confirmPassword
     }
     
     var body: some View {
@@ -59,34 +58,6 @@ struct RegisterView: View {
                 
                 // 注册表单
                 VStack(spacing: 20) {
-                    // 昵称输入框
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("昵称")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.9))
-                        
-                        HStack {
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.white.opacity(0.7))
-                                .frame(width: 20)
-                            
-                            TextField("请输入昵称", text: $nickname)
-                                .textContentType(.nickname)
-                                .autocapitalization(.none)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .nickname)
-                                .foregroundColor(.white)
-                                .tint(.white)
-                        }
-                        .padding()
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(focusedField == .nickname ? Color.white : Color.clear, lineWidth: 2)
-                        )
-                    }
-                    
                     // 邮箱输入框
                     VStack(alignment: .leading, spacing: 8) {
                         Text("邮箱")
@@ -227,7 +198,7 @@ struct RegisterView: View {
     
     // 验证输入是否有效
     private var isValidInput: Bool {
-        !nickname.isEmpty && !nickname.trimmingCharacters(in: .whitespaces).isEmpty && !email.isEmpty && isValidEmail(email) && !password.isEmpty && password.count >= 6 && !confirmPassword.isEmpty
+        !email.isEmpty && isValidEmail(email) && !password.isEmpty && password.count >= 6 && !confirmPassword.isEmpty && password == confirmPassword
     }
     
     // 验证邮箱格式
@@ -241,13 +212,6 @@ struct RegisterView: View {
     private func handleRegister() {
         // 隐藏键盘
         focusedField = nil
-        
-        // 验证昵称
-        let trimmedNickname = nickname.trimmingCharacters(in: .whitespaces)
-        guard !trimmedNickname.isEmpty else {
-            errorMessage = "请输入昵称"
-            return
-        }
         
         // 验证邮箱格式
         guard isValidEmail(email) else {
@@ -274,7 +238,7 @@ struct RegisterView: View {
         // 使用 Supabase 进行注册
         Task {
             do {
-                try await authManager.signUp(email: email, password: password, nickname: trimmedNickname)
+                try await authManager.signUp(email: email, password: password)
                 await MainActor.run {
                     isLoading = false
                     // 注册成功后自动关闭注册界面（登录状态改变会自动切换界面）

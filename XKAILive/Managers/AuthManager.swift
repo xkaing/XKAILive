@@ -75,57 +75,26 @@ class AuthManager: ObservableObject {
     }
     
     /// 使用邮箱和密码注册新用户
-    func signUp(email: String, password: String, nickname: String) async throws {
+    func signUp(email: String, password: String) async throws {
         do {
             // 注册用户
             let authResponse = try await supabase.auth.signUp(
                 email: email,
-                password: password,
-                data: [
-                    "nickname": AnyJSON.string(nickname),
-                    "full_name": AnyJSON.string(nickname)
-                ]
+                password: password
             )
             
             let user = authResponse.user
             let userId = user.id
             
-            // 创建用户资料
-            do {
-                let profile = try await ProfileService.shared.createProfile(
-                    userId: userId,
-                    nickname: nickname,
-                    avatarUrl: nil
-                )
+            await MainActor.run {
+                self.userId = userId.uuidString
+                self.userEmail = email
+                self.isLoggedIn = true
                 
-                await MainActor.run {
-                    self.userId = userId.uuidString
-                    self.userEmail = email
-                    self.userNickname = profile.nickname ?? nickname
-                    self.userAvatarUrl = profile.avatarUrl ?? ""
-                    self.isLoggedIn = true
-                    
-                    // 保存到 UserDefaults
-                    UserDefaults.standard.set(true, forKey: "isLoggedIn")
-                    UserDefaults.standard.set(self.userEmail, forKey: "userEmail")
-                    UserDefaults.standard.set(self.userNickname, forKey: "userNickname")
-                    UserDefaults.standard.set(self.userAvatarUrl, forKey: "userAvatarUrl")
-                    UserDefaults.standard.set(self.userId, forKey: "userId")
-                }
-            } catch {
-                // 如果创建 profile 失败，仍然保存基本用户信息
-                print("⚠️ 创建用户资料失败，但用户已注册: \(error)")
-                await MainActor.run {
-                    self.userId = userId.uuidString
-                    self.userEmail = email
-                    self.userNickname = nickname
-                    self.isLoggedIn = true
-                    
-                    UserDefaults.standard.set(true, forKey: "isLoggedIn")
-                    UserDefaults.standard.set(self.userEmail, forKey: "userEmail")
-                    UserDefaults.standard.set(self.userNickname, forKey: "userNickname")
-                    UserDefaults.standard.set(self.userId, forKey: "userId")
-                }
+                // 保存到 UserDefaults
+                UserDefaults.standard.set(true, forKey: "isLoggedIn")
+                UserDefaults.standard.set(self.userEmail, forKey: "userEmail")
+                UserDefaults.standard.set(self.userId, forKey: "userId")
             }
         } catch {
             throw error
