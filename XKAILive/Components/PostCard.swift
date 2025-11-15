@@ -10,6 +10,7 @@ import SwiftUI
 struct PostCard: View {
     let post: Post
     @State private var isLiked: Bool = false
+    @State private var likeAnimationScale: CGFloat = 1.0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -111,14 +112,25 @@ struct PostCard: View {
             HStack {
                 // 点赞按钮
                 Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                        isLiked.toggle()
+                    // 切换点赞状态
+                    isLiked.toggle()
+                    
+                    // 触发弹跳动画
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+                        likeAnimationScale = 1.5
+                    }
+                    
+                    // 延迟后恢复
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            likeAnimationScale = 1.0
+                        }
                     }
                 }) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
                         .font(.system(size: 20))
                         .foregroundColor(isLiked ? .red : .secondary)
-                        .scaleEffect(isLiked ? 1.2 : 1.0)
+                        .scaleEffect(likeAnimationScale)
                 }
                 .buttonStyle(PlainButtonStyle())
                 
