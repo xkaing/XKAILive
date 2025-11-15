@@ -71,6 +71,16 @@ struct HomeView: View {
                 gradientColors: [
                     Color(.gray)
                 ]
+            ),
+            CardConfig(
+                title: "去后台",
+                description: "xiakai.wang",
+                detailDescription: "管理用户，动态内容，直播间内容，等等",
+                gradientColors: [
+                    Color(red: 0.3, green: 0.5, blue: 0.85),    // 深蓝色（顶部）
+                    Color(red: 0.5, green: 0.4, blue: 0.75),   // 深紫色（中间）
+                    Color(red: 0.7, green: 0.45, blue: 0.7)     // 深紫粉色（底部）
+                ]
             )
         ]
     }
