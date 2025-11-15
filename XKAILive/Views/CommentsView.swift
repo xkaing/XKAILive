@@ -13,7 +13,7 @@ struct CommentsView: View {
     @Environment(\.dismiss) var dismiss
     
     @State private var comments: [Comment] = []
-    @State private var isLoading = false
+    @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var commentText: String = ""
     @State private var isSubmitting = false
@@ -33,14 +33,20 @@ struct CommentsView: View {
                             .padding(.vertical, 12)
                         
                         // 评论列表
-                        if isLoading && comments.isEmpty {
+                        if isLoading {
                             // 加载状态
                             HStack {
                                 Spacer()
-                                ProgressView()
-                                    .padding()
+                                VStack(spacing: 12) {
+                                    ProgressView()
+                                    Text("加载中...")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding()
                                 Spacer()
                             }
+                            .frame(minHeight: 200)
                         } else if comments.isEmpty {
                             // 空状态
                             VStack(spacing: 16) {
@@ -151,6 +157,7 @@ struct CommentsView: View {
                 }
             }
         }
+        .presentationDetents([.large])
     }
     
     /// 加载评论
@@ -158,15 +165,19 @@ struct CommentsView: View {
         isLoading = true
         errorMessage = nil
         
+        print("📝 开始加载评论，momentId: \(post.id)")
+        
         Task {
             do {
                 let fetchedComments = try await CommentsService.shared.fetchComments(momentId: post.id)
                 await MainActor.run {
+                    print("✅ 成功加载 \(fetchedComments.count) 条评论")
                     self.comments = fetchedComments
                     self.isLoading = false
                 }
             } catch {
                 await MainActor.run {
+                    print("❌ 加载评论失败: \(error)")
                     self.errorMessage = "加载评论失败: \(error.localizedDescription)"
                     self.isLoading = false
                 }

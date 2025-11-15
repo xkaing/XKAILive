@@ -10,20 +10,22 @@ import SwiftUI
 struct PostCard: View {
     let post: Post
     let currentUserId: String?
+    var onCommentTap: (() -> Void)? = nil
     @State private var isLiked: Bool = false
     @State private var likeAnimationScale: CGFloat = 1.0
     @State private var isUpdatingLike: Bool = false
     
-    init(post: Post, currentUserId: String? = nil) {
+    init(post: Post, currentUserId: String? = nil, onCommentTap: (() -> Void)? = nil) {
         self.post = post
         self.currentUserId = currentUserId
+        self.onCommentTap = onCommentTap
         // 初始化时从 post 读取点赞状态
         self._isLiked = State(initialValue: post.isLiked)
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 用户信息区域
+            // 用户信息区域（不可点击）
             HStack(spacing: 12) {
                 // 用户头像 - 如果有 URL 则显示，否则使用默认图标
                 if !post.userAvatar.isEmpty, let avatarUrl = URL(string: post.userAvatar) {
@@ -74,48 +76,58 @@ struct PostCard: View {
                 Spacer()
             }
             
-            // 动态内容
-            Text(post.content)
-                .font(.system(size: 15))
-                .lineSpacing(4)
-                .fixedSize(horizontal: false, vertical: true)
-            
-            // 图片（如果有）
-            if let imageUrl = post.imageUrl {
-                AsyncImage(url: URL(string: imageUrl)) { phase in
-                    switch phase {
-                    case .empty:
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.1))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 200)
-                            .overlay {
-                                ProgressView()
+            // 可点击的内容区域（文字和图片）
+            Button(action: {
+                onCommentTap?()
+            }) {
+                VStack(alignment: .leading, spacing: 12) {
+                    // 动态内容
+                    Text(post.content)
+                        .font(.system(size: 15))
+                        .lineSpacing(4)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    // 图片（如果有）
+                    if let imageUrl = post.imageUrl {
+                        AsyncImage(url: URL(string: imageUrl)) { phase in
+                            switch phase {
+                            case .empty:
+                                Rectangle()
+                                    .fill(Color.gray.opacity(0.1))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 200)
+                                    .overlay {
+                                        ProgressView()
+                                    }
+                                    .cornerRadius(8)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 200)
+                                    .clipped()
+                                    .cornerRadius(8)
+                            case .failure:
+                                Rectangle()
+                                    .fill(Color.gray.opacity(0.1))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 200)
+                                    .overlay {
+                                        Image(systemName: "photo")
+                                            .foregroundColor(.gray)
+                                    }
+                                    .cornerRadius(8)
+                            @unknown default:
+                                EmptyView()
                             }
-                            .cornerRadius(8)
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 200)
-                            .clipped()
-                            .cornerRadius(8)
-                    case .failure:
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.1))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 200)
-                            .overlay {
-                                Image(systemName: "photo")
-                                    .foregroundColor(.gray)
-                            }
-                            .cornerRadius(8)
-                    @unknown default:
-                        EmptyView()
+                        }
                     }
                 }
             }
+            .buttonStyle(PlainButtonStyle())
             
             // 操作区
             HStack {
@@ -135,7 +147,9 @@ struct PostCard: View {
                 Spacer()
                 
                 // 评论按钮
-                NavigationLink(destination: CommentsView(post: post)) {
+                Button(action: {
+                    onCommentTap?()
+                }) {
                     Image(systemName: "bubble.right")
                         .font(.system(size: 20))
                         .foregroundColor(.secondary)
@@ -174,7 +188,6 @@ struct PostCard: View {
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-        .contentShape(Rectangle())
     }
     
     /// 处理点赞切换

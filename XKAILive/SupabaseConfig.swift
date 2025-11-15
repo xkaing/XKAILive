@@ -43,7 +43,7 @@ struct SupabaseConfig {
     
     // MARK: - 文件配置
     /// 图片上传质量（0.0 - 1.0）
-    static let imageCompressionQuality: CGFloat = 0.8
+    static let imageCompressionQuality: CGFloat = 1.0
     
     /// 最大文件大小（字节），5MB
     static let maxFileSize: Int = 5 * 1024 * 1024

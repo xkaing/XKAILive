@@ -16,6 +16,8 @@ struct CommunityView: View {
     @State private var errorMessage: String?
     @State private var loadTask: Task<Void, Never>?
     @State private var rotationAngle: Double = 0
+    @State private var selectedPostForComments: Post?
+    @State private var showCommentsView = false
     
     var body: some View {
         NavigationStack {
@@ -111,7 +113,14 @@ struct CommunityView: View {
                 } else {
                     VStack(spacing: 16) {
                         ForEach(posts) { post in
-                            PostCard(post: post, currentUserId: authManager.userId)
+                            PostCard(
+                                post: post,
+                                currentUserId: authManager.userId,
+                                onCommentTap: {
+                                    selectedPostForComments = post
+                                    showCommentsView = true
+                                }
+                            )
                         }
                     }
                     .padding(.horizontal, 16)
@@ -121,6 +130,18 @@ struct CommunityView: View {
             .scrollIndicators(.visible)
             .background(Color(.systemGroupedBackground))
             .navigationTitle("社区")
+            .sheet(isPresented: $showCommentsView) {
+                if let post = selectedPostForComments {
+                    CommentsView(post: post)
+                        .environmentObject(authManager)
+                } else {
+                    // 防止空白页
+                    Text("加载中...")
+                        .onAppear {
+                            showCommentsView = false
+                        }
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
