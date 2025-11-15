@@ -135,9 +135,7 @@ struct PostCard: View {
                 Spacer()
                 
                 // 评论按钮
-                Button(action: {
-                    // TODO: 实现评论功能
-                }) {
+                NavigationLink(destination: CommentsView(post: post)) {
                     Image(systemName: "bubble.right")
                         .font(.system(size: 20))
                         .foregroundColor(.secondary)
