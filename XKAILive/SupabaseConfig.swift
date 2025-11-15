@@ -24,6 +24,9 @@ struct SupabaseConfig {
     /// 动态表
     static let momentsTable = "moments"
     
+    /// 点赞表
+    static let likesTable = "likes"
+    
     // MARK: - Storage 存储桶名称
     /// 图片存储桶（用于存储头像和动态图片）
     static let imageBucket = "image"

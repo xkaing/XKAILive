@@ -9,8 +9,17 @@ import SwiftUI
 
 struct PostCard: View {
     let post: Post
+    let currentUserId: String?
     @State private var isLiked: Bool = false
     @State private var likeAnimationScale: CGFloat = 1.0
+    @State private var isUpdatingLike: Bool = false
+    
+    init(post: Post, currentUserId: String? = nil) {
+        self.post = post
+        self.currentUserId = currentUserId
+        // 初始化时从 post 读取点赞状态
+        self._isLiked = State(initialValue: post.isLiked)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -112,27 +121,16 @@ struct PostCard: View {
             HStack {
                 // 点赞按钮
                 Button(action: {
-                    // 切换点赞状态
-                    isLiked.toggle()
-                    
-                    // 触发弹跳动画
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
-                        likeAnimationScale = 1.5
-                    }
-                    
-                    // 延迟后恢复
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                            likeAnimationScale = 1.0
-                        }
-                    }
+                    handleLikeToggle()
                 }) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
                         .font(.system(size: 20))
                         .foregroundColor(isLiked ? .red : .secondary)
                         .scaleEffect(likeAnimationScale)
+                        .opacity(isUpdatingLike ? 0.6 : 1.0)
                 }
                 .buttonStyle(PlainButtonStyle())
+                .disabled(isUpdatingLike || currentUserId == nil)
                 
                 Spacer()
                 
@@ -180,16 +178,66 @@ struct PostCard: View {
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .contentShape(Rectangle())
     }
+    
+    /// 处理点赞切换
+    private func handleLikeToggle() {
+        guard let currentUserId = currentUserId else {
+            return
+        }
+        
+        let momentId = post.id
+        
+        // 先更新UI状态（乐观更新）
+        let newLikedState = !isLiked
+        isLiked = newLikedState
+        
+        // 触发弹跳动画
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+            likeAnimationScale = 1.5
+        }
+        
+        // 延迟后恢复
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                likeAnimationScale = 1.0
+            }
+        }
+        
+        // 更新数据库
+        isUpdatingLike = true
+        Task {
+            do {
+                if newLikedState {
+                    try await MomentsService.shared.likeMoment(momentId: momentId, userId: currentUserId)
+                } else {
+                    try await MomentsService.shared.unlikeMoment(momentId: momentId, userId: currentUserId)
+                }
+                await MainActor.run {
+                    isUpdatingLike = false
+                }
+            } catch {
+                // 如果更新失败，回滚UI状态
+                await MainActor.run {
+                    isLiked = !newLikedState
+                    isUpdatingLike = false
+                    print("❌ 更新点赞状态失败: \(error)")
+                }
+            }
+        }
+    }
 }
 
 #Preview {
     PostCard(post: Post(
+        id: 1,
         userName: "测试用户",
         userAvatar: "https://picsum.photos/id/1/50/50",
         publishTime: "11-4 12:26",
         content: "这是一条测试动态内容，可以包含多行文字。",
-        imageUrl: "https://picsum.photos/id/101/400/300"
-    ))
+        imageUrl: "https://picsum.photos/id/101/400/300",
+        likeCount: 5,
+        isLiked: false
+    ), currentUserId: nil)
     .padding()
 }
 

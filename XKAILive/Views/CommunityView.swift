@@ -111,7 +111,7 @@ struct CommunityView: View {
                 } else {
                     VStack(spacing: 16) {
                         ForEach(posts) { post in
-                            PostCard(post: post)
+                            PostCard(post: post, currentUserId: authManager.userId)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -183,8 +183,25 @@ struct CommunityView: View {
         
         do {
             let moments = try await MomentsService.shared.fetchMoments()
+            
+            // 批量获取点赞状态（优化性能）
+            var posts: [Post] = []
+            let currentUserId = authManager.userId.isEmpty ? nil : authManager.userId
+            if let currentUserId = currentUserId {
+                let momentIds = moments.compactMap { $0.id }
+                let likedMomentIds = try await MomentsService.shared.getLikedMomentIds(momentIds: momentIds, userId: currentUserId)
+                
+                for moment in moments {
+                    guard let momentId = moment.id else { continue }
+                    let isLiked = likedMomentIds.contains(momentId)
+                    posts.append(Post(from: moment, currentUserId: currentUserId, isLiked: isLiked))
+                }
+            } else {
+                posts = moments.map { Post(from: $0, currentUserId: nil, isLiked: false) }
+            }
+            
             await MainActor.run {
-                self.posts = moments.map { Post(from: $0) }
+                self.posts = posts
                 self.isLoading = false
                 print("✅ 成功加载 \(moments.count) 条动态")
             }
